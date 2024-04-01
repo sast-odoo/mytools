@@ -2,8 +2,8 @@ Display fields of a record with useful info like its ttype, relation, and invers
 
 ## how to use
 - clone the repo into your odoo directory
-- start odoo shell (python odoo-bin shell...)
-- run "from mytools import *"
+- start odoo shell (`python odoo-bin shell ...`)
+- run `from mytools import *`
 
 `def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)`
 ## Parameters
