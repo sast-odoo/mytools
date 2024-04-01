@@ -1,5 +1,21 @@
 from odoo import api, fields, models
 
+def get_inverse(env, field):
+    if field["ttype"] == "many2many":
+        # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
+        if field['relation_table']:
+            return env['ir.model.fields'].search([('relation_table','=ilike',field['relation_table']),('name','not ilike',field['name'])]).name
+        return None
+
+    if field['relation_field']:
+        return field['relation_field']
+    
+    # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
+    field_result = env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
+    if field_result:
+        return field_result.name
+    return None
+
 def display(env, record, id=None, ttype=False, hide_empty=False, archived=False):
     '''
     how to use:
@@ -99,23 +115,12 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
 
             if ttype in ("many2one","one2many","many2many"):
 
-                if ttype == "many2many":
-                    # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
-                    if fields_dict[key]['relation_table']:
-                        other_table_field = env['ir.model.fields'].search([('relation_table','=ilike',fields_dict[key]['relation_table']),('name','not ilike',key)]).name
-                        inverse_string = "inverse to %s" % other_table_field
-                    else:
-                        inverse_string = "no inverse"
+                inverse_name = get_inverse(env, fields_dict[key])
+
+                if inverse_name:
+                    inverse_string = 'inverse to %s' % inverse_name
                 else:
-                    if fields_dict[key]['relation_field']:
-                        inverse_string = "inverse to %s" % fields_dict[key]['relation_field']
-                    else:
-                        # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
-                        field_result = env['ir.model.fields'].search([('relation','=ilike',record._name), ('relation_field','=ilike',key)])
-                        if field_result:
-                            inverse_string = "inverse to %s" % field_result.name
-                        else:
-                            inverse_string = "no inverse"
+                    inverse_string = 'no inverse'
 
                 print(" to %s, %s)" % (fields_dict[key]['relation'], inverse_string), end="")
             else:
