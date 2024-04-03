@@ -1,6 +1,37 @@
 from odoo import api, fields, models
 
+#def required(env, modelname):
+#    print("Required fields for model '%s':")
+
+def fieldinfo(env, modelname, fieldname):
+    field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
+    print(field)
+    #field = {fieldname:read_fields}
+
+    print(f"===== {modelname} - {fieldname} ({field['ttype']}) =====")
+    print(f"Field ID: {field['id']}")
+    print(f"Description: {field['field_description']}")
+    print(f"Modules: {field['modules']}")
+    print(f"Required: {field['required']}")
+    print(f"Compute: {field['compute']}")
+    if field['compute']:
+        print(f"\tDepends on: {field['depends']}")
+    print(f"Store: {field['store']}")
+
+    if field['relation']:
+        print("*** Relation info ***")
+        print(f"\tRelated model: {field['relation']}")
+        print(f"\tInverse field: {get_inverse(env, field)}")
+        print(f"\tOn delete: {field['on_delete']}")
+        if field['ttype'] == 'many2many':
+            print(f"\tM2M table: {field['relation_table']}")
+            print(f"\tColumn 1: {field['column1']}")
+            print(f"\tColumn 2: {field['column2']}")
+
+
+
 def get_inverse(env, field):
+    #print(field)
     if field["ttype"] == "many2many":
         # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
         if field['relation_table']:
