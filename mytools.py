@@ -4,7 +4,27 @@ def required(env, modelname):
     for field in fields:
         print(f"\t{field.name} ({field.ttype})")
 
+def relations(env, modelname):
+    print(f"Relational fields for model '{modelname}':")
+    fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('ttype','in',('many2one','many2many','one2many'))])
+    for field in fields:
+        print(f"\t{field.name} ({field.ttype} to {field.relation})")
+
 def fieldinfo(env, modelname, fieldname):
+    #print(modelname,fieldname)
+
+    if "." in fieldname:
+        #print("chained fieldname passed")
+        split_fields = fieldname.split(".")
+        joined_fields = ".".join(split_fields[1:])
+
+        this_field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',split_fields[0])]).read()[0]
+        related_model = this_field['relation']
+        print(f"* {this_field['name']} ({this_field['ttype']}) --> {this_field['relation']}")
+
+        fieldinfo(env, related_model, joined_fields)
+        return
+
     field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
     #print(field)
 
