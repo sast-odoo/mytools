@@ -1,33 +1,48 @@
-from odoo import api, fields, models
-
 #def required(env, modelname):
 #    print("Required fields for model '%s':")
 
 def fieldinfo(env, modelname, fieldname):
     field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
-    print(field)
-    #field = {fieldname:read_fields}
+    #print(field)
 
-    print(f"===== {modelname} - {fieldname} ({field['ttype']}) =====")
-    print(f"Field ID: {field['id']}")
-    print(f"Description: {field['field_description']}")
-    print(f"Modules: {field['modules']}")
-    print(f"Required: {field['required']}")
-    print(f"Compute: {field['compute']}")
+    print_list = [
+        f"===== {modelname} - {fieldname} ({field['ttype']}) =====",
+        f"Field ID: {field['id']}",
+        f"Description: {field['field_description']}",
+    f"Modules: {field['modules']}",
+    f"Required: {field['required']}",
+    f"Compute: {field['compute']}",
+    f"Store: {field['store']}",
+    ]
+
     if field['compute']:
-        print(f"\tDepends on: {field['depends']}")
-    print(f"Store: {field['store']}")
-
+        print_list.insert(6, f"Depends on: {field['depends']}")
+    
     if field['relation']:
-        print("*** Relation info ***")
-        print(f"\tRelated model: {field['relation']}")
-        print(f"\tInverse field: {get_inverse(env, field)}")
-        print(f"\tOn delete: {field['on_delete']}")
-        if field['ttype'] == 'many2many':
-            print(f"\tM2M table: {field['relation_table']}")
-            print(f"\tColumn 1: {field['column1']}")
-            print(f"\tColumn 2: {field['column2']}")
+        print_list.extend([
+            "*** Relation info ***",
+            f"\tRelated model: {field['relation']}",
+            f"\tInverse field: {get_inverse(env, field)}",
+            f"\tOn delete: {field['on_delete']}",
+        ])
 
+        if field['ttype'] == 'many2many':
+            print_list.extend([
+                f"\tM2M table: {field['relation_table']}",
+                f"\tColumn 1: {field['column1']}",
+                f"\tColumn 2: {field['column2']}",
+            ])
+    
+    if field['ttype'] == 'selection':
+
+        print_list.append("*** Selection info ***")
+
+        selections = env['ir.model.fields.selection'].browse(field['selection_ids'])
+        for selection in selections:
+            print_list.append(f'\t{selection.id}: {selection.value} - "{selection.name}"')
+
+    for print_item in print_list:
+        print(print_item)
 
 
 def get_inverse(env, field):
@@ -55,8 +70,8 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
             if archived:
                 display(env,
                         env[record].search([("active","in",(True,False))],limit=1),
-                        ttype=ttype, 
-                        hide_empty=hide_empty, 
+                        ttype=ttype,
+                        hide_empty=hide_empty,
                         print_header=print_header)
             else:
                 display(env,
