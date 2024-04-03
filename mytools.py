@@ -12,75 +12,54 @@ def get_inverse(env, field):
     
     # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
     field_result = env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
-    if field_result:
+    if len(field_result)>1:
+        return ", ".join(field_result.mapped("name"))
+    if len(field_result)==1:
         return field_result.name
     return None
 
-def display(env, record, id=None, ttype=False, hide_empty=False, archived=False):
-    '''
-    how to use:
-        put mytools.py in your odoo directory
-        start odoo shell (python odoo-bin shell...)
-        run "from mytools import display"
-    
-    usage options:
-        - display(env, record)
-            where record is a record object ie. res.partner(1,) to print its fields
-        - display(env, recordset)
-            where recordset is a recordset object ie. res.partner(1,2,3,) to print all
-        - display(env, modelname, id)
-            where modelname is a string like "res.partner" and id is an int, to print the fields of the record with that id
-        - display(env, modelname, ids)
-            where modelname is a string and ids is a list or tuple of ints representing ids, to print all those records
-        - display(env, modelname)
-            print the fields of a random record on that model (the first record returned by search([]))
-        pass True to hide_empty to skip printing unset fields
-    '''
-
-    #print("record:",record,"id:",id,"hide_empty:",hide_empty)
+def display(env, record, id=None, ttype=False, hide_empty=False, archived=False, print_header=True):
     if isinstance(record,str):
         if not id:
-            print("Model name provided; printing sample record")
             if archived:
-                display(env, env[record].search([("active","in",(True,False))],limit=1), ttype=ttype, hide_empty=hide_empty)
+                display(env,
+                        env[record].search([("active","in",(True,False))],limit=1),
+                        ttype=ttype, 
+                        hide_empty=hide_empty, 
+                        print_header=print_header)
             else:
-                display(env, env[record].search([],limit=1), ttype=ttype, hide_empty=hide_empty)
-                
+                display(env,
+                        env[record].search([],limit=1),
+                        ttype=ttype,
+                        hide_empty=hide_empty,
+                        print_header=print_header)
             return
+        
+        if isinstance(id,int):
+            search_domain = [("id","=",id)]
+
+        elif isinstance(id,(list,tuple)):
+            search_domain = [("id","in",id)]
+
         else:
-            #print(id)
-            
-            if isinstance(id,int):
-                #result = env[record].search([("id","=",id)])
-                #display(env, env[record].search([("id","=",id)]), hide_empty=hide_empty)
-                search_domain = [("id","=",id)]
-            elif isinstance(id,(list,tuple)):
-                #result = env[record].search([("id","in",id)])
-                #display(env, env[record].search([("id","in",id)]), hide_empty=hide_empty)
-                search_domain = [("id","in",id)]
-            else:
-                raise TypeError("param 'id' should be an int or a list of int")
-            result = env[record].search(search_domain)
-            if not result or archived:
-                search_domain.append(("active","in",(True,False)))
-            result=env[record].search(search_domain)
-            display(env, result, ttype=ttype, hide_empty=hide_empty)
-            return
+            raise TypeError("param 'id' should be an int or a list of int")
+        result = env[record].search(search_domain)
+        if not result or archived:
+            search_domain.append(("active","in",(True,False)))
+
+        result=env[record].search(search_domain)
+        display(env, result, ttype=ttype, hide_empty=hide_empty, print_header=print_header)
+
+        return
 
     if ttype:
         read_fields = env['ir.model.fields'].search([('model','=ilike',record._name),('ttype','=like',ttype)]).read()
     else:
         read_fields = env['ir.model.fields'].search([('model','=ilike',record._name)]).read()
+    
     fields_dict = {}
     for field in read_fields:
         fields_dict[field['name']] = field
-
-    #for i in fields_dict:
-    #    print(i)
-    #for key,val in fields_dict:
-    #    print(key,val)
-    #for i in read_fields:
-    #    print(i)
         
     print_values = True
     
@@ -96,7 +75,8 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
         elif "active" in record and not record.active:
             archived_str = " [ARCHIVED]"
         
-        print('\n===== %s%s%s =====' % (record._name, id_str, archived_str))
+        if print_header:
+            print('\n===== %s%s%s =====' % (record._name, id_str, archived_str))
 
         if print_values:
             sorted_items = sorted(list(record.read()[0].items()), key=lambda i: i[0])
@@ -140,4 +120,4 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
 
     else:
         for rec in sorted(record, key=lambda i: i.id):
-            display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived)
+            display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived, print_header=print_header)
