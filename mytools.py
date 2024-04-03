@@ -2,13 +2,13 @@ def required(env, modelname):
     print(f"Required fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('required','=',True)])
     for field in fields:
-        print(f"\t{field.name} ({field.ttype})")
+        print(f"\t{field.name} ({ttype_str(env, field.read()[0])})")
 
 def relations(env, modelname):
     print(f"Relational fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('ttype','in',('many2one','many2many','one2many'))])
     for field in fields:
-        print(f"\t{field.name} - {field.ttype} to {field.relation}, {inverse_str(env,field)}")
+        print(f"\t{field.name} ({ttype_str(env, field.read()[0])})")
 
 def inverse_str(env, field):
     inv = get_inverse(env, field)
@@ -17,12 +17,12 @@ def inverse_str(env, field):
     return "no inverse"
 
 def ttype_str(env, field):
-    retval = f"{field['ttype']}"
+    retval = field['ttype']
     if field['ttype'] in ('many2one','many2many','one2many'):
         retval += f" to {field['relation']}, {inverse_str(env, field)}"
     return retval
 
-def val_str(env, field, val, print_vals):
+def val_str(field, val, print_vals):
     if not print_vals:
         return ""
     if field['ttype']=='binary' and val:
@@ -94,7 +94,7 @@ def get_inverse(env, field):
 
     if field['relation_field']:
         return field['relation_field']
-    
+
     # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
     field_result = env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
     if len(field_result)>1:
@@ -175,7 +175,7 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
                 # fake fields like 'in_group_11' will throw keyerror
                 continue
 
-            print(f"{key} ({ttype_str(env, fields_dict[key])}){val_str(env, fields_dict[key], val, print_values)}")
+            print(f"{key} ({ttype_str(env, fields_dict[key])}){val_str(fields_dict[key], val, print_values)}")
             
     else:
         for rec in sorted(record, key=lambda i: i.id):
