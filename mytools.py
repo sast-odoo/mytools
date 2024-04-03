@@ -1,5 +1,8 @@
-#def required(env, modelname):
-#    print("Required fields for model '%s':")
+def required(env, modelname):
+    print(f"Required fields for model '{modelname}':")
+    fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('required','=',True)])
+    for field in fields:
+        print(f"\t{field.name} ({field.ttype})")
 
 def fieldinfo(env, modelname, fieldname):
     field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
@@ -32,7 +35,7 @@ def fieldinfo(env, modelname, fieldname):
                 f"\tColumn 1: {field['column1']}",
                 f"\tColumn 2: {field['column2']}",
             ])
-    
+
     if field['ttype'] == 'selection':
 
         print_list.append("*** Selection info ***")
