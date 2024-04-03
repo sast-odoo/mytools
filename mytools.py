@@ -8,13 +8,30 @@ def relations(env, modelname):
     print(f"Relational fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('ttype','in',('many2one','many2many','one2many'))])
     for field in fields:
-        print(f"\t{field.name} ({field.ttype} to {field.relation})")
+        print(f"\t{field.name} - {field.ttype} to {field.relation}, {inverse_str(env,field)}")
+
+def inverse_str(env, field):
+    inv = get_inverse(env, field)
+    if inv:
+        return f"inverse to {inv}"
+    return "no inverse"
+
+def ttype_str(env, field):
+    retval = f"{field['ttype']}"
+    if field['ttype'] in ('many2one','many2many','one2many'):
+        retval += f" to {field['relation']}, {inverse_str(env, field)}"
+    return retval
+
+def val_str(env, field, val, print_vals):
+    if not print_vals:
+        return ""
+    if field['ttype']=='binary' and val:
+        return ": [binary data]"
+    return f": {val}"
 
 def fieldinfo(env, modelname, fieldname):
-    #print(modelname,fieldname)
 
     if "." in fieldname:
-        #print("chained fieldname passed")
         split_fields = fieldname.split(".")
         joined_fields = ".".join(split_fields[1:])
 
@@ -26,7 +43,6 @@ def fieldinfo(env, modelname, fieldname):
         return
 
     field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
-    #print(field)
 
     print_list = [
         f"===== {modelname} - {fieldname} ({field['ttype']}) =====",
@@ -69,7 +85,7 @@ def fieldinfo(env, modelname, fieldname):
 
 
 def get_inverse(env, field):
-    #print(field)
+
     if field["ttype"] == "many2many":
         # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
         if field['relation_table']:
@@ -155,38 +171,12 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
         for key,val in sorted_items:
             if hide_empty and not val:
                 continue
-            try: # fake fields like 'in_group_11' will throw keyerror
-                ttype = fields_dict[key]['ttype']
-            except KeyError:
+            if key not in fields_dict or "ttype" not in fields_dict[key]:
+                # fake fields like 'in_group_11' will throw keyerror
                 continue
 
-            print(key, "(%s" % ttype, end="")
-
-            if ttype in ("many2one","one2many","many2many"):
-
-                inverse_name = get_inverse(env, fields_dict[key])
-
-                if inverse_name:
-                    inverse_string = 'inverse to %s' % inverse_name
-                else:
-                    inverse_string = 'no inverse'
-
-                print(" to %s, %s)" % (fields_dict[key]['relation'], inverse_string), end="")
-            else:
-                print(")", end="")
+            print(f"{key} ({ttype_str(env, fields_dict[key])}){val_str(env, fields_dict[key], val, print_values)}")
             
-            if print_values:
-                print(": ",end="")
-                if ttype=="binary":
-                    if val:
-                        print("[binary data]")
-                    else:
-                        print(val)
-                else:
-                    print(val)
-            else:
-                print()
-
     else:
         for rec in sorted(record, key=lambda i: i.id):
             display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived, print_header=print_header)
