@@ -30,8 +30,20 @@ List the relational (one2many, many2one, and many2many) fields on the given mode
 List some useful information about a field, like its id, description, ttype, modules, whether its required or computed, and if its a relation some info on its relation
 
 - `env` - the `odoo.api.Environment`
-- `modelname` - `string` of model name (i.e. `'sale.order'`)
-- `fieldname` - `string` of a field name (i.e. `'order_id`), can also be a dot-seperated path of related fields, like `'invoice_ids.invoice_line_ids.product_id.taxes_id'`, fieldinfo will traverse the path
+- `modelname` - `string` of model name (i.e. `'sale.order'`) **or** an `int` of a `ir.model.fields` record
+- `fieldname` - (only needed if a model name is passed as the first parameter instead of an id) `string` of a field name (i.e. `'order_id`), can also be a dot-seperated path of related fields, like `'invoice_ids.invoice_line_ids.product_id.taxes_id'`, fieldinfo will traverse the path
+
+`def data(env, record)`
+Get the `ir.model.data` record associated with this record, if one exists (`ir.model.data` records are what gets created when you make records via data xml files)
+
+- `env` - the `odoo.api.Environment`
+- `record` - record object
+
+`def unref(env, record)`
+opposite of `env.ref(xml_id)` - returns the xml_id string of this record if one exists. Shorthand for `data(env, record).complete_name`
+
+- `env` - the `odoo.api.Environment`
+- `record` - record object
 
 ## examples
 ```
