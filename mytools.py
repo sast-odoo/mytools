@@ -10,7 +10,7 @@ def data(env, record):
 
 def unref(env, record):
     # inverse of 'ref' method - finds a record's xml id from its record object
-    return data(env, record).complete_name
+    return ", ".join(data(env, record).mapped('complete_name'))
 
 def relations(env, modelname):
     print(f"Relational fields for model '{modelname}':")
@@ -37,20 +37,26 @@ def val_str(field, val, print_vals):
         return ": [binary data]"
     return f": {val}"
 
-def fieldinfo(env, modelname, fieldname):
+def fieldinfo(env, modelname, fieldname=""):
 
-    if "." in fieldname:
-        split_fields = fieldname.split(".")
-        joined_fields = ".".join(split_fields[1:])
+    if isinstance(modelname, int):
+        field = env['ir.model.fields'].browse(modelname)
+        modelname = field.model
+        fieldname = field.name
 
-        this_field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',split_fields[0])]).read()[0]
-        related_model = this_field['relation']
-        print(f"* {this_field['name']} ({this_field['ttype']}) --> {this_field['relation']}")
+    else:
+        if "." in fieldname:
+            split_fields = fieldname.split(".")
+            joined_fields = ".".join(split_fields[1:])
 
-        fieldinfo(env, related_model, joined_fields)
-        return
+            this_field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',split_fields[0])]).read()[0]
+            related_model = this_field['relation']
+            print(f"* {this_field['name']} ({this_field['ttype']}) --> {this_field['relation']}")
 
-    field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
+            fieldinfo(env, related_model, joined_fields)
+            return
+
+        field = env['ir.model.fields'].search([('model','=ilike',modelname),('name','=ilike',fieldname)]).read()[0]
 
     print_list = [
         f"===== {modelname} - {fieldname} ({field['ttype']}) =====",
@@ -84,7 +90,8 @@ def fieldinfo(env, modelname, fieldname):
 
         print_list.append("*** Selection info ***")
 
-        selections = env['ir.model.fields.selection'].browse(field['selection_ids'])
+        selections = env['ir.model.fields.selection'].browse(field['selection_ids'].ids)
+        #print(selections)
         for selection in selections:
             print_list.append(f'\t{selection.id}: {selection.value} - "{selection.name}"')
 
@@ -179,7 +186,7 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
             unref_name = unref(env, record)
             if unref_name:
                 print(f"* xml_id: {unref_name}")
-                print(f"* ir.model.data id: {data(env, record).id}")
+                print(f"* ir.model.data id: {', '.join(str(i) for i in data(env, record).ids)}")
         else:
             print(f"* Record name field: {record_name_field}")
 
@@ -200,3 +207,4 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
     else:
         for rec in sorted(record, key=lambda i: i.id):
             display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived)
+            print("\n")
