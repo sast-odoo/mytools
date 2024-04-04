@@ -106,18 +106,18 @@ def get_inverse(env, field):
 def display(env, record, id=None, ttype=False, hide_empty=False, archived=False, print_header=True):
     if isinstance(record,str):
         if not id:
-            if archived:
-                display(env,
-                        env[record].search([("active","in",(True,False))],limit=1),
-                        ttype=ttype,
-                        hide_empty=hide_empty,
-                        print_header=print_header)
-            else:
-                display(env,
-                        env[record].search([],limit=1),
-                        ttype=ttype,
-                        hide_empty=hide_empty,
-                        print_header=print_header)
+            #if archived:
+            #    display(env,
+            #            env[record].search([("active","in",(True,False))],limit=1),
+            #            ttype=ttype,
+            #            hide_empty=hide_empty,
+            #            print_header=print_header)
+            #else:
+            display(env,
+                    env[record].search([],limit=1),
+                    ttype=ttype,
+                    hide_empty=hide_empty,
+                    print_header=print_header)
             return
         
         if isinstance(id,int):
@@ -128,19 +128,27 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
 
         else:
             raise TypeError("param 'id' should be an int or a list of int")
+        
+
         result = env[record].search(search_domain)
-        if not result or archived:
+
+        if ("active" in result._fields) and (not result or archived):
             search_domain.append(("active","in",(True,False)))
 
-        result=env[record].search(search_domain)
+        result = env[record].search(search_domain)
         display(env, result, ttype=ttype, hide_empty=hide_empty, print_header=print_header)
 
         return
 
+    domain = [('model','=ilike',record._name)]
+
     if ttype:
-        read_fields = env['ir.model.fields'].search([('model','=ilike',record._name),('ttype','=like',ttype)]).read()
-    else:
-        read_fields = env['ir.model.fields'].search([('model','=ilike',record._name)]).read()
+        if isinstance(ttype,str):
+            domain.append(('ttype','=ilike',ttype))
+        elif isinstance(ttype,(list,tuple)):
+            domain.append(('ttype','in',ttype))
+
+    read_fields = env['ir.model.fields'].search(domain).read()
     
     fields_dict = {}
     for field in read_fields:
