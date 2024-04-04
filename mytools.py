@@ -4,6 +4,14 @@ def required(env, modelname):
     for field in fields:
         print(f"\t{field.name} ({ttype_str(env, field.read()[0])})")
 
+def data(env, record):
+    # return ir.model.data object associated with the record (if any)
+    return(env['ir.model.data'].search([('model','=ilike',record._name),('res_id','=',record.id)]))
+
+def unref(env, record):
+    # inverse of 'ref' method - finds a record's xml id from its record object
+    return data(env, record).complete_name
+
 def relations(env, modelname):
     print(f"Relational fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('ttype','in',('many2one','many2many','one2many'))])
@@ -103,21 +111,16 @@ def get_inverse(env, field):
         return field_result.name
     return None
 
-def display(env, record, id=None, ttype=False, hide_empty=False, archived=False, print_header=True):
+def display(env, record, id=None, ttype=False, hide_empty=False, archived=False):
     if isinstance(record,str):
+        model_name = record
+
         if not id:
-            #if archived:
-            #    display(env,
-            #            env[record].search([("active","in",(True,False))],limit=1),
-            #            ttype=ttype,
-            #            hide_empty=hide_empty,
-            #            print_header=print_header)
-            #else:
             display(env,
-                    env[record].search([],limit=1),
+                    env[model_name].search([],limit=1),
                     ttype=ttype,
                     hide_empty=hide_empty,
-                    print_header=print_header)
+                    archived=archived)
             return
         
         if isinstance(id,int):
@@ -129,18 +132,17 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
         else:
             raise TypeError("param 'id' should be an int or a list of int")
         
-
-        result = env[record].search(search_domain)
+        result = env[model_name].search(search_domain)
 
         if ("active" in result._fields) and (not result or archived):
             search_domain.append(("active","in",(True,False)))
 
-        result = env[record].search(search_domain)
-        display(env, result, ttype=ttype, hide_empty=hide_empty, print_header=print_header)
+        result = env[model_name].search(search_domain)
+        display(env, result, ttype=ttype, hide_empty=hide_empty)
 
         return
 
-    domain = [('model','=ilike',record._name)]
+    domain = [('model','=ilike',record._name)] # _name attribute of a record gets its model name
 
     if ttype:
         if isinstance(ttype,str):
@@ -168,8 +170,18 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
         elif "active" in record and not record.active:
             archived_str = " [ARCHIVED]"
         
-        if print_header:
-            print('\n===== %s%s%s =====' % (record._name, id_str, archived_str))
+        print('===== %s%s%s =====' % (record._name, id_str, archived_str))
+
+        record_name_field = record._rec_name # find what field this model uses as its name
+
+        if print_values:
+            print(f"* Record name ({record_name_field}): '{record[record_name_field]}'")
+            unref_name = unref(env, record)
+            if unref_name:
+                print(f"* xml_id: {unref_name}")
+                print(f"* ir.model.data id: {data(env, record).id}")
+        else:
+            print(f"* Record name field: {record_name_field}")
 
         if print_values:
             sorted_items = sorted(list(record.read()[0].items()), key=lambda i: i[0])
@@ -187,4 +199,4 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False,
             
     else:
         for rec in sorted(record, key=lambda i: i.id):
-            display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived, print_header=print_header)
+            display(env, rec, ttype=ttype, hide_empty=hide_empty, archived=archived)
