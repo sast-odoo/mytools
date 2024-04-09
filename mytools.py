@@ -1,38 +1,95 @@
+def views(env, modelname):
+    ''' Print all views with this model '''
+    base_views = env['ir.ui.view'].search([('model','=ilike',modelname),('inherit_id','in',(False, None))])
+    inherit_views = env['ir.ui.view'].search([('model','=ilike',modelname),('inherit_id','not in',(False, None))])
+
+    base_dict = {}
+    for filename in set(base_views.mapped("arch_fs")):
+        base_dict[filename] = base_views.search([('arch_fs','=ilike',filename)])
+
+    inherit_dict = {}
+    for filename in set(inherit_views.mapped("arch_fs")):
+        inherit_dict[filename] = inherit_views.search([('arch_fs','=ilike',filename)])
+
+    print("Base views:")
+    for filename in base_dict:
+        print(f"\tIn file '{filename}':")
+        for view in sorted(base_dict[filename],key=lambda v: v['type']):
+            print(f"\t\t{view['type']}:\t{view['xml_id']} (id: {view['id']})")
+
+    print("\nInheriting:")
+    for filename in inherit_dict:
+        print(f"\tIn file '{filename}':")
+        for view in sorted(inherit_dict[filename],key=lambda v: v['type']):
+            print(f"\t\t{view['type']}:\t{view['xml_id']} (id: {view['id']})")
+
+def comodel_for(env, modelname):
+    ''' find all fields that have this model as its relational comodel '''
+    print(f"Fields that model '{modelname}' is a comodel for:")
+    fields = env['ir.model.fields'].search([('relation','=ilike',modelname)])
+    for field in sorted(fields, key=lambda f: f.model): #sort by model name
+        print(f"{field.id}\t{field.model}: {field.name} ({field.ttype}, {inverse_str(env,field)})")
+
 def required(env, modelname):
+    ''' Print names of required fields on this model '''
     print(f"Required fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('required','=',True)])
-    for field in fields:
-        print(f"\t{field.name} ({ttype_str(env, field.read()[0])})")
+    for field in sorted(fields, key=lambda f: f.model):
+        print(f"{field.id}\t{field.name} ({ttype_str(env, field.read()[0])})")
 
 def data(env, record):
-    # return ir.model.data object associated with the record (if any)
+    ''' Return ir.model.data object associated with the record (if any) '''
     return(env['ir.model.data'].search([('model','=ilike',record._name),('res_id','=',record.id)]))
 
 def unref(env, record):
-    # inverse of 'ref' method - finds a record's xml id from its record object
+    ''' Inverse of 'ref' method - finds a record's xml id from its record object '''
     return ", ".join(data(env, record).mapped('complete_name'))
 
 def relations(env, modelname):
+    ''' Print names of relational fields on this model '''
     print(f"Relational fields for model '{modelname}':")
     fields = env['ir.model.fields'].search([('model','=ilike',modelname), ('ttype','in',('many2one','many2many','one2many'))])
-    for field in fields:
-        print(f"\t{field.name} ({ttype_str(env, field.read()[0])})")
+    for field in sorted(fields, key=lambda f: f.model):
+        print(f"{field.id}\t{field.name} ({ttype_str(env, field.read()[0])})")
+
+def get_inverse(env, field):
+    ''' Find the inverse field on the related model of this relational field '''
+    if field["ttype"] == "many2many":
+        # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
+        if field['relation_table']:
+            return env['ir.model.fields'].search([('relation_table','=ilike',field['relation_table']),('name','not ilike',field['name'])]).name
+        return None
+
+    if field['relation_field']:
+        return field['relation_field']
+
+    # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
+    field_result = env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
+    if len(field_result)>1:
+        return ", ".join(field_result.mapped("name"))
+    if len(field_result)==1:
+        return field_result.name
+    return None
 
 def inverse_str(env, field):
+    ''' return print-ready string result of get_inverse '''
     inv = get_inverse(env, field)
     if inv:
         return f"inverse to {inv}"
     return "no inverse"
 
 def ttype_str(env, field):
+    ''' return print-ready string representing the ttype (and relational data) '''
     retval = field['ttype']
     if field['ttype'] in ('many2one','many2many','one2many'):
         retval += f" to {field['relation']}, {inverse_str(env, field)}"
     return retval
 
 def val_str(field, val, print_vals):
+    ''' return print-ready string representing the value '''
     if not print_vals:
-        return ""
+        #return ""
+        return f" - {field['field_description']}"
     if field['ttype']=='binary' and val:
         return ": [binary data]"
     return f": {val}"
@@ -97,26 +154,6 @@ def fieldinfo(env, modelname, fieldname=""):
 
     for print_item in print_list:
         print(print_item)
-
-
-def get_inverse(env, field):
-
-    if field["ttype"] == "many2many":
-        # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
-        if field['relation_table']:
-            return env['ir.model.fields'].search([('relation_table','=ilike',field['relation_table']),('name','not ilike',field['name'])]).name
-        return None
-
-    if field['relation_field']:
-        return field['relation_field']
-
-    # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
-    field_result = env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
-    if len(field_result)>1:
-        return ", ".join(field_result.mapped("name"))
-    if len(field_result)==1:
-        return field_result.name
-    return None
 
 def display(env, record, id=None, ttype=False, hide_empty=False, archived=False):
     if isinstance(record,str):
@@ -202,7 +239,7 @@ def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)
                 # fake fields like 'in_group_11' will throw keyerror
                 continue
 
-            print(f"{key} ({ttype_str(env, fields_dict[key])}){val_str(fields_dict[key], val, print_values)}")
+            print(f"{fields_dict[key]['id']}\t{key} ({ttype_str(env, fields_dict[key])}){val_str(fields_dict[key], val, print_values)}")
             
     else:
         for rec in sorted(record, key=lambda i: i.id):
