@@ -12,15 +12,15 @@ def views(env, modelname):
         inherit_dict[filename] = inherit_views.search([('arch_fs','=ilike',filename)])
 
     print("Base views:")
-    for filename in base_dict:
+    for filename,view_records in sorted(base_dict.items(),key=lambda tup: tup[0]):
         print(f"\tIn file '{filename}':")
-        for view in sorted(base_dict[filename],key=lambda v: v['type']):
+        for view in sorted(view_records,key=lambda v: v['type']):
             print(f"\t\t{view['type']}:\t{view['xml_id']} (id: {view['id']})")
 
     print("\nInheriting:")
-    for filename in inherit_dict:
+    for filename,view_records in sorted(inherit_dict.items(),key=lambda tup: tup[0]):
         print(f"\tIn file '{filename}':")
-        for view in sorted(inherit_dict[filename],key=lambda v: v['type']):
+        for view in sorted(view_records,key=lambda v: v['type']):
             print(f"\t\t{view['type']}:\t{view['xml_id']} (id: {view['id']})")
 
 def comodel_for(env, modelname):
