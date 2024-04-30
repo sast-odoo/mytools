@@ -1,5 +1,11 @@
 from thefuzz import fuzz
 
+# TODO - ability to display all records of a relationship field
+# like if a record has a field named 'related_ids' with [1,2,3,4,5],
+# some way to just type record.related_ids and display all of [1,2,3,4,5]
+
+# TODO - viewing computed fields in fieldinfo doens't behave as expected
+
 class Tool():
     def __init__(self, env):
         self.env = env
@@ -108,9 +114,18 @@ class Tool():
 
     def ttype_str(self, field):
         ''' return print-ready string representing the ttype (and relational data) '''
+        retval = ""
+
         retval = field['ttype']
+
         if field['ttype'] in ('many2one','many2many','one2many'):
-            retval += f" to {field['relation']}, {self.inverse_str(field)}"
+            retval += f" to {field['relation']}"
+
+        if field['related']:
+            retval = "RELATED via " + field['related'] + " - " + retval
+        elif field['ttype'] in ('many2one','many2many','one2many'):
+            retval += f", {self.inverse_str(field)}"
+
         return retval
 
     def val_str(self, field, val, print_vals):
@@ -157,6 +172,8 @@ class Tool():
             f"===== {modelname} - {fieldname} ({field['ttype']}) =====",
             f"Field ID: {field['id']}",
             f"Description: {field['field_description']}",
+        f"Related: {field['related']}",
+        # TODO - if field is related, should print data of the related field
         f"Modules: {field['modules']}",
         f"Required: {field['required']}",
         f"Compute: {field['compute']}",
@@ -257,9 +274,12 @@ class Tool():
             print('===== %s%s%s =====' % (record._name, id_str, archived_str))
 
             record_name_field = record._rec_name # find what field this model uses as its name
-
+            
             if print_values:
-                print(f"* Record name ({record_name_field}): '{record[record_name_field]}'")
+                if record_name_field:
+                    print(f"* Record name ({record_name_field}): '{record[record_name_field]}'")
+                else:
+                    print("* No record name field on model")
                 unref_name = self.unref(record)
                 if unref_name:
                     print(f"* xml_id: {unref_name}")
