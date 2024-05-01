@@ -91,7 +91,7 @@ class Tool():
         if field["ttype"] == "many2many":
             # many2many's don't use the inverse field, instead they link to other many2many's with a table, so find the other m2m field using this table
             if field['relation_table']:
-                return self.env['ir.model.fields'].search([('relation_table','=ilike',field['relation_table']),('name','not ilike',field['name'])]).name
+                return ", ".join(self.env['ir.model.fields'].search([('relation_table','=ilike',field['relation_table']),('name','not ilike',field['name'])]).mapped('name'))
             return None
 
         if field['relation_field']:
