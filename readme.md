@@ -1,85 +1,23 @@
-## how to use
-- clone the repo into your odoo directory
-- start odoo shell (`python odoo-bin shell ...`)
-- run `from mytools import *`
+Clone this repo in the inner odoo directory (i.e. so it's alongside of the directories cli, conf, tools etc)
+You can import and use the tool in the odoo shell or in odoo modules to help debug, just import `from odoo.mytools import *` either in the shell or at the top of your module file. (just remember to remove all references to it before you push, if you're doing a dev)
 
-`def display(env, record, id=None, ttype=False, hide_empty=False, archived=False)`
-Print fields of a record and their values with some other useful info
+To use the methods, you must create a "Tool" object, this object is instantiated with the odoo 'env' object, such as `t = Tool(env)`. All the methods can then be accessed by doing `t.display(...)`
 
-- `env` - the `odoo.api.Environment` (just pass the `env` that you're given when you start the shell)
-- `record` - record, recordset, or `string` of a model name
-- `id` - (optional) if `record` is passed a model name, then this is an `int` of the ID of the record to look up on that model. If `record` is passed as a model name and no `id` is supplied, `display` will use the fields of the first record returned by a `search([])` on that model
-- `ttype` - (optional) a `string` giving a field ttype (i.e. `many2many`, `boolean`, `integer`) to filter results to fields of that type only
-- `hide_empty` - (optional, default `False`) whether to display unset fields
-- `archived` - (optional, default `False`) whether to display archived records
+In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` every single time you start the shell, you can modify the odoo/cli/shell.py file: add `from ..mytools import *` to the top of the file, then under the line `local_vars['self'] = env.user` in the shell() function, add the line `local_vars['t'] = Tool(env)`, now you can use `t` to access all the methods without having to instantiate it every time.
 
-`def required(env, modelname)`
-List the required fields on the given modelname
+## Useful methods
 
-- `env` - the `odoo.api.Environment`
-- `modelname` - `string` of model name (i.e. `'sale.order'`)
-
-`def relations(env, modelname)`
-List the relational (one2many, many2one, and many2many) fields on the given modelname, with what models they point to
-(sort of a shorthand for calling `display` with `ttype` of one2many, many2many, and many2one)
-
-- `env` - the `odoo.api.Environment`
-- `modelname` - `string` of model name (i.e. `'sale.order'`)
-
-`def fieldinfo(env, modelname, fieldname)`
-List some useful information about a field, like its id, description, ttype, modules, whether its required or computed, and if its a relation some info on its relation
-
-- `env` - the `odoo.api.Environment`
-- `modelname` - `string` of model name (i.e. `'sale.order'`) **or** an `int` of a `ir.model.fields` record
-- `fieldname` - (only needed if a model name is passed as the first parameter instead of an id) `string` of a field name (i.e. `'order_id`), can also be a dot-seperated path of related fields, like `'invoice_ids.invoice_line_ids.product_id.taxes_id'`, fieldinfo will traverse the path
-
-`def data(env, record)`
-Get the `ir.model.data` record associated with this record, if one exists (`ir.model.data` records are what gets created when you make records via data xml files)
-
-- `env` - the `odoo.api.Environment`
-- `record` - record object
-
-`def unref(env, record)`
-opposite of `env.ref(xml_id)` - returns the xml_id string of this record if one exists. Shorthand for `data(env, record).complete_name`
-
-- `env` - the `odoo.api.Environment`
-- `record` - record object
-
-## examples
-```
-# print fields of a random record of 'product.template' model
-display(env, 'product.template')
-
-# print fields of the product.template with id 1
-display(env, 'product.template', 1)
-
-# print fields of a record object
-record = env['product.template'].browse(1) # acquire some record
-display(env, record)
-
-# print fields of all records in a recordset
-recordset = env['product.template'].browse([1,2,3]) # acquire some recordset
-display(env, recordset)
-
-# print fields of the product.template records with ids 1, 2, and 3
-display(env, 'product.template', [1,2,3])
-
-# print field data only, no values
-# (display will print field data only if no record is given/found, and -1 is not a valid id for any record)
-display(env, 'product.template', -1)
-
-# only print fields that are many2one
-display(env, 'product.template', ttype='many2one')
-
-# only print fields that are either char or boolean
-display(env, 'product.template', ttype=('char','boolean'))
-
-required(env, 'sale.order')
-
-relations(env, 'res.partner')
-
-fieldinfo(env, 'sale.order', 'order_line')
-
-fieldinfo(env, 'sale.order', 'invoice_ids.invoice_line_ids.product_id.taxes_id')
-
-```
+display(record OR str modelname, int id=None, ttype=False, hide_empty=False, archived=False)
+- display all the fields and their values of the record along with a bunch of useful info about the fields
+views(str modelname)
+- display all the views for that model in the database, noting the filepath of each view and whether or not it's inherited
+comodel_for(str modelname)
+- Find and display all fields that have this model as its relational comodel
+required(str modelname)
+- print names of required fields on this model
+unref(record)
+- inverse of "ref" method - find a record's xml id from its record object, if it has one
+relations(str modelname)
+- print names of all relational (many2one, x2many) fields on the model with useful info
+fieldinfo(str modelname OR int fieldId OR tuple (int fieldId))
+- print useful info about a particular field
