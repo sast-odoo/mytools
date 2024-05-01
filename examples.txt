@@ -1,0 +1,450 @@
+env: <odoo.api.Environment object at 0x7f963bf54ed0>
+odoo: <module 'odoo' from '/home/sast/odoo16/odoo/__init__.py'>
+openerp: <module 'odoo' from '/home/sast/odoo16/odoo/__init__.py'>
+self: res.users(1,)
+t: <odoo.mytools.mytools.Tool object at 0x7f963c3b1710>
+Python 3.7.17 (default, Jun  6 2023, 20:10:09) 
+[GCC 11.3.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+(Console)
+
+################ display ################
+
+# Calling display with model name but no id = random record
+>>> t.display('res.partner')
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+946	__last_update (datetime): 2024-05-01 15:51:32.104700
+914	active (boolean): True
+902	active_lang_count (integer): 1
+888	avatar_1024 (binary): [binary data]
+891	avatar_128 (binary): [binary data]
+887	avatar_1920 (binary): [binary data]
+890	avatar_256 (binary): [binary data]
+889	avatar_512 (binary): [binary data]
+910	bank_ids (one2many to res.partner.bank, inverse to partner_id): []
+943	barcode (char): False
+913	category_id (many2many to res.partner.category, inverse to partner_ids): [5]
+899	child_ids (one2many to res.partner, inverse to parent_id): [26, 33, 27]
+921	city (char): Fremont
+936	color (integer): 0
+912	comment (html): False
+941	commercial_company_name (char): Azure Interior
+940	commercial_partner_id (many2one to res.partner, no inverse): (14, 'Azure Interior')
+935	company_id (many2one to res.company, no inverse): False
+942	company_name (char): False
+909	company_registry (char): False
+934	company_type (selection): company
+939	contact_address (char): Azure Interior
+4557 De Silva St
+
+Fremont CA 94538
+United States
+924	country_code (RELATED via country_id.code - char): US
+923	country_id (many2one to res.country, no inverse): (233, 'United States')
+# ... etc
+
+# Calling display with record object
+>>> record = env['res.partner'].search([],limit=1)
+>>> record
+res.partner(14,)
+>>> t.display(record)
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+946	__last_update (datetime): 2024-05-01 15:51:32.104700
+914	active (boolean): True
+902	active_lang_count (integer): 1
+888	avatar_1024 (binary): [binary data]
+891	avatar_128 (binary): [binary data]
+887	avatar_1920 (binary): [binary data]
+# ... etc
+
+# Calling display using model name and record id to specify record
+>>> t.display('res.partner',5)
+===== res.partner, id: 5  [ARCHIVED] =====
+* Record name (name): 'Default User Template'
+* xml_id: base.default_user_res_partner
+* ir.model.data id: 3114
+946	__last_update (datetime): 2024-05-01 15:51:32.104700
+914	active (boolean): False
+902	active_lang_count (integer): 1
+888	avatar_1024 (binary): [binary data]
+891	avatar_128 (binary): [binary data]
+887	avatar_1920 (binary): [binary data]
+# ... etc
+
+
+# Filter by field type of "char" only
+>>> t.display(record, ttype='char')
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+943	barcode (char): False
+921	city (char): Fremont
+941	commercial_company_name (char): Azure Interior
+942	company_name (char): False
+909	company_registry (char): False
+939	contact_address (char): Azure Interior
+# ... etc
+
+# Filter by field type of char or selection
+>>> t.display(record, ttype=['selection','char'])
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+943	barcode (char): False
+921	city (char): Fremont
+941	commercial_company_name (char): Azure Interior
+942	company_name (char): False
+909	company_registry (char): False
+934	company_type (selection): company
+# ... etc
+
+# Display all records in a recordset and limit field type to boolean
+>>> records = env['res.partner'].search([],limit=5)
+>>> records
+res.partner(14, 26, 33, 27, 10)
+>>> t.display(records, ttype="boolean")
+===== res.partner, id: 10  =====
+* Record name (name): 'Deco Addict'
+* xml_id: base.res_partner_2
+* ir.model.data id: 5796
+914	active (boolean): True
+915	employee (boolean): False
+931	is_company (boolean): True
+932	is_public (boolean): False
+938	partner_share (boolean): True
+
+
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+914	active (boolean): True
+915	employee (boolean): False
+931	is_company (boolean): True
+932	is_public (boolean): False
+938	partner_share (boolean): True
+
+
+===== res.partner, id: 26  =====
+* Record name (name): 'Brandon Freeman'
+* xml_id: base.res_partner_address_15
+* ir.model.data id: 5812
+914	active (boolean): True
+915	employee (boolean): False
+931	is_company (boolean): False
+932	is_public (boolean): False
+938	partner_share (boolean): True
+
+
+===== res.partner, id: 27  =====
+* Record name (name): 'Nicole Ford'
+* xml_id: base.res_partner_address_16
+* ir.model.data id: 5813
+914	active (boolean): True
+915	employee (boolean): False
+931	is_company (boolean): False
+932	is_public (boolean): False
+938	partner_share (boolean): True
+
+
+===== res.partner, id: 33  =====
+* Record name (name): 'Colleen Diaz'
+* xml_id: base.res_partner_address_28
+* ir.model.data id: 5819
+914	active (boolean): True
+915	employee (boolean): False
+931	is_company (boolean): False
+932	is_public (boolean): False
+938	partner_share (boolean): True
+
+# Call display with model name and a list of ids (2 is skipped because res.partner 2 is archived)
+>>> t.display('res.partner',[1,2,3],ttype="selection")
+===== res.partner, id: 1  =====
+* Record name (name): 'YourCompany'
+* xml_id: base.main_partner
+* ir.model.data id: 3
+934	company_type (selection): company
+901	lang (selection): en_US
+917	type (selection): contact
+903	tz (selection): False
+
+
+===== res.partner, id: 3  =====
+* Record name (name): 'Mitchell Admin'
+* xml_id: base.partner_admin
+* ir.model.data id: 2915
+934	company_type (selection): person
+901	lang (selection): en_US
+917	type (selection): contact
+903	tz (selection): Europe/Brussels
+
+# To get it to display the archived records, pass archived=True
+>>> t.display('res.partner',[1,2,3],ttype="selection",archived=True)
+===== res.partner, id: 1  =====
+* Record name (name): 'YourCompany'
+* xml_id: base.main_partner
+* ir.model.data id: 3
+934	company_type (selection): company
+901	lang (selection): en_US
+917	type (selection): contact
+903	tz (selection): False
+
+
+===== res.partner, id: 2  [ARCHIVED] =====
+* Record name (name): 'System'
+* xml_id: base.partner_root
+* ir.model.data id: 2914
+934	company_type (selection): person
+901	lang (selection): en_US
+917	type (selection): contact
+903	tz (selection): Europe/Brussels
+
+
+===== res.partner, id: 3  =====
+* Record name (name): 'Mitchell Admin'
+* xml_id: base.partner_admin
+* ir.model.data id: 2915
+934	company_type (selection): person
+901	lang (selection): en_US
+917	type (selection): contact
+903	tz (selection): Europe/Brussels
+
+# But calling display with a single id of an archived record will always display it (no archived=True required)
+>>> t.display('res.partner',2)
+===== res.partner, id: 2  [ARCHIVED] =====
+* Record name (name): 'System'
+* xml_id: base.partner_root
+* ir.model.data id: 2914
+946	__last_update (datetime): 2024-05-01 15:51:32.104700
+914	active (boolean): False
+902	active_lang_count (integer): 1
+888	avatar_1024 (binary): [binary data]
+891	avatar_128 (binary): [binary data]
+887	avatar_1920 (binary): [binary data]
+890	avatar_256 (binary): [binary data]
+889	avatar_512 (binary): [binary data]
+910	bank_ids (one2many to res.partner.bank, inverse to partner_id): []
+943	barcode (char): False
+# ... etc
+
+# hide_empty=True to not print blank/null fields
+>>> t.display(record,hide_empty=True)
+===== res.partner, id: 14  =====
+* Record name (name): 'Azure Interior'
+* xml_id: base.res_partner_12
+* ir.model.data id: 5800
+946	__last_update (datetime): 2024-05-01 15:51:32.104700
+914	active (boolean): True
+902	active_lang_count (integer): 1
+# ... etc
+
+# Record with id doesn't exist, or records can't be found: print field info/descriptions but no value
+>>> t.display('res.partner',-1)
+No records, printing field data only
+===== res.partner [FIELDS ONLY] =====
+* Record name field: name
+946	__last_update (datetime) - Last Modified on
+914	active (boolean) - Active
+902	active_lang_count (integer) - Active Lang Count
+888	avatar_1024 (binary) - Avatar 1024
+891	avatar_128 (binary) - Avatar 128
+887	avatar_1920 (binary) - Avatar
+890	avatar_256 (binary) - Avatar 256
+889	avatar_512 (binary) - Avatar 512
+910	bank_ids (one2many to res.partner.bank, inverse to partner_id) - Banks
+943	barcode (char) - Barcode
+# ...etc
+
+################ views ################
+
+>>> t.views('res.partner')
+Base views:
+	In file 'base/views/res_partner_views.xml':
+		form:	base.view_partner_form (id: 123)
+		form:	base.view_partner_category_form (id: 127)
+		form:	base.res_partner_industry_view_form (id: 130)
+		form:	base.view_partner_simple_form (id: 121)
+		form:	base.view_partner_title_form (id: 119)
+		form:	base.view_partner_address_form (id: 122)
+		form:	base.res_partner_view_form_private (id: 124)
+		kanban:	base.res_partner_kanban_view (id: 126)
+		search:	base.res_partner_category_view_search (id: 129)
+		search:	base.res_partner_industry_view_search (id: 132)
+		search:	base.view_res_partner_filter (id: 125)
+		tree:	base.view_partner_category_list (id: 128)
+		tree:	base.res_partner_industry_view_tree (id: 131)
+		tree:	base.view_partner_tree (id: 120)
+		tree:	base.view_partner_title_tree (id: 118)
+	In file 'contacts_enterprise/views/contact_views.xml':
+		map:	contacts_enterprise.res_partner_view_map (id: 359)
+	In file 'mail/views/res_partner_views.xml':
+		activity:	mail.res_partner_view_activity (id: 323)
+		form:	mail.res_partner_view_form_inherit_mail (id: 319)
+		kanban:	mail.res_partner_view_kanban_inherit_mail (id: 320)
+		search:	mail.res_partner_view_search_inherit_mail (id: 321)
+		tree:	mail.res_partner_view_tree_inherit_mail (id: 322)
+
+Inheriting:
+	In file 'base_setup/views/res_partner_views.xml':
+		kanban:	base_setup.res_partner_kanban_view (id: 234)
+	In file 'mail/views/res_partner_views.xml':
+		activity:	mail.res_partner_view_activity (id: 323)
+		form:	mail.res_partner_view_form_inherit_mail (id: 319)
+		kanban:	mail.res_partner_view_kanban_inherit_mail (id: 320)
+		search:	mail.res_partner_view_search_inherit_mail (id: 321)
+		tree:	mail.res_partner_view_tree_inherit_mail (id: 322)
+	In file 'partner_autocomplete/views/res_partner_views.xml':
+		form:	partner_autocomplete.view_res_partner_form_inherit_partner_autocomplete (id: 361)
+		form:	partner_autocomplete.view_partner_simple_form_inherit_partner_autocomplete (id: 362)
+	In file 'sms/views/res_partner_views.xml':
+		form:	sms.res_partner_view_form (id: 373)
+		search:	sms.res_partner_view_search (id: 374)
+	In file 'web_map/views/res_partner_views.xml':
+		form:	web_map.res_partner_view_form_inherit_map (id: 328)
+
+################ comodel_for ################
+
+>>> t.comodel_for('res.partner')
+Fields that model 'res.partner' is a comodel for:
+1399	base.document.layout: partner_id (many2one, no inverse)
+1369	base.partner.merge.automatic.wizard: dst_partner_id (many2one, no inverse)
+1368	base.partner.merge.automatic.wizard: partner_ids (many2many, no inverse)
+2248	ir.actions.server: partner_ids (many2many, no inverse)
+2451	ir.cron: partner_ids (many2many, no inverse)
+1834	mail.activity: request_partner_id (many2one, no inverse)
+1851	mail.blacklist: message_partner_ids (many2many, no inverse)
+2160	mail.channel: channel_partner_ids (many2many, no inverse)
+2143	mail.channel: message_partner_ids (many2many, no inverse)
+# ... etc
+
+################ required ################
+
+>>> t.required('res.company')
+Required fields for model 'res.company':
+1067	currency_id (many2one to res.currency, no inverse)
+1089	layout_background (selection)
+1055	name (RELATED via partner_id.name - char)
+1060	partner_id (many2one to res.partner, no inverse)
+
+################ unref ################
+
+>>> record = env['res.partner'].browse(14)
+>>> t.unref(record)
+'base.res_partner_12'
+
+################ relations ################
+
+>>> t.relations('res.partner')
+Relational fields for model 'res.partner':
+2292	activity_ids (one2many to mail.activity, inverse to res_id)
+2295	activity_type_id (RELATED via activity_ids.activity_type_id - many2one to mail.activity.type)
+2294	activity_user_id (RELATED via activity_ids.user_id - many2one to res.users)
+910	bank_ids (one2many to res.partner.bank, inverse to partner_id)
+913	category_id (many2many to res.partner.category, inverse to partner_ids)
+2307	channel_ids (many2many to mail.channel, no inverse)
+899	child_ids (one2many to res.partner, inverse to parent_id)
+940	commercial_partner_id (many2one to res.partner, no inverse)
+935	company_id (many2one to res.company, no inverse)
+# ... etc
+
+################ fieldinfo ################
+
+# passing model name and field name
+>>> t.fieldinfo('res.partner','name')
+===== res.partner - name (char) =====
+Field ID: 892
+Description: Name
+Related: False
+Modules: base
+Required: False
+Compute: False
+Store: True
+
+# passing model name and field name - relational field
+>>> t.fieldinfo('res.partner','state_id')
+===== res.partner - state_id (many2one) =====
+Field ID: 922
+Description: State
+Related: False
+Modules: base
+Required: False
+Compute: False
+Store: True
+*** Relation info ***
+	Related model: res.country.state
+	Inverse field: None
+	On delete: restrict
+
+# passing field id, related field
+>>> t.fieldinfo(2294)
+===== res.partner - activity_user_id (many2one) =====
+Field ID: 2294
+Description: Responsible User
+Related: activity_ids.user_id
+Modules: mail
+Required: False
+Compute: False
+Store: False
+*** Relation info ***
+	Related model: res.users
+	Inverse field: None
+	On delete: False
+
+# you can chain relational fields, fieldinfo will traverse/crawl it and display the final one
+>>> t.fieldinfo('res.partner','user_id.industry_id')
+* user_id (many2one) --> res.users
+===== res.users - industry_id (many2one) =====
+Field ID: 1201
+Description: Industry
+Related: partner_id.industry_id
+Modules: base
+Required: False
+Compute: False
+Store: False
+*** Relation info ***
+	Related model: res.partner.industry
+	Inverse field: None
+	On delete: False
+
+
+>>> t.fieldinfo('res.partner','company_id.external_report_layout_id.groups_id.rule_groups.groups')
+* company_id (many2one) --> res.company
+* external_report_layout_id (many2one) --> ir.ui.view
+* groups_id (many2many) --> res.groups
+* rule_groups (many2many) --> ir.rule
+===== ir.rule - groups (many2many) =====
+Field ID: 548
+Description: Groups
+Related: False
+Modules: base
+Required: False
+Compute: False
+Store: True
+*** Relation info ***
+	Related model: res.groups
+	Inverse field: 
+	On delete: False
+	M2M table: rule_group_rel
+	Column 1: rule_group_id
+	Column 2: group_id
+
+# can display a selection field's possible values
+===== ir.ui.view - mode (selection) =====
+Field ID: 210
+Description: View inheritance mode
+Related: False
+Modules: base
+Required: True
+Compute: False
+Store: True
+*** Selection info ***
+	43: primary - "Base view"
+	44: extension - "Extension View"
