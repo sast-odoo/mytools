@@ -7,17 +7,17 @@ In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` 
 
 ## Useful methods
 
-display(record OR str modelname, int id=None, ttype=False, hide_empty=False, archived=False)
+### display(record OR str modelname, int id=None, ttype=False, hide_empty=False, archived=False)
 - display all the fields and their values of the record along with a bunch of useful info about the fields
-views(str modelname)
+### views(str modelname)
 - display all the views for that model in the database, noting the filepath of each view and whether or not it's inherited
-comodel_for(str modelname)
+### comodel_for(str modelname)
 - Find and display all fields that have this model as its relational comodel
-required(str modelname)
+### required(str modelname)
 - print names of required fields on this model
-unref(record)
+### unref(record)
 - inverse of "ref" method - find a record's xml id from its record object, if it has one
-relations(str modelname)
+### relations(str modelname)
 - print names of all relational (many2one, x2many) fields on the model with useful info
-fieldinfo(str modelname OR int fieldId OR tuple (int fieldId))
+### fieldinfo(str modelname OR int fieldId OR tuple (int fieldId))
 - print useful info about a particular field
