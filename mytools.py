@@ -18,6 +18,7 @@ class Tool():
         for user in users:
             print("\t",user.login,"-",user.groups_id.filtered(lambda r: r.category_id.id == self.env.ref('base.module_category_user_type').id).name)
         users.write({"password":"shell"})
+        self.env.cr.commit()
         print("Changed all user passwords to 'shell'")
     
     def new_user(self):
@@ -39,6 +40,7 @@ class Tool():
             print("User 'shell' already exists; resetting password to 'shell' and reassigning admin groups")
             user.password = "shell"
             user.write({'groups_id':[(4, self.env.ref(group_name).id, 0) for group_name in admin_groups]})
+            self.env.cr.commit()
             return
 
         partner = self.env['res.partner'].create({'name':'Shell'})
@@ -52,6 +54,7 @@ class Tool():
                 ]
             }
         )
+        self.env.cr.commit()
         print("Created new user with id: %d, login: 'shell' password: 'shell'" % user.id)
 
     def is_valid_modelname(self, string):
