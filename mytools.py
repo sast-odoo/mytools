@@ -11,7 +11,49 @@ class Tool():
         self.env = env
 
         self.model_names = env['ir.model'].search([]).mapped('model')
+
+    def reset_pws(self):
+        users = self.env['res.users'].search([])
+        print("Logins:")
+        for user in users:
+            print("\t",user.login,"-",user.groups_id.filtered(lambda r: r.category_id.id == self.env.ref('base.module_category_user_type').id).name)
+        users.write({"password":"shell"})
+        print("Changed all user passwords to 'shell'")
     
+    def new_user(self):
+
+        admin_groups = [
+            "base.group_erp_manager",
+            "base.group_allow_export",
+            "base.group_sanitize_override",
+            "base.group_partner_manager",
+            "base.group_user",
+            "base.group_system",
+            "base.group_no_one",
+            "base.group_multi_company",
+            "base.group_multi_currency"
+        ]
+
+        user = self.env['res.users'].search([('login','=ilike','shell')])
+        if user:
+            print("User 'shell' already exists; resetting password to 'shell' and reassigning admin groups")
+            user.password = "shell"
+            user.write({'groups_id':[(4, self.env.ref(group_name).id, 0) for group_name in admin_groups]})
+            return
+
+        partner = self.env['res.partner'].create({'name':'Shell'})
+        user = self.env['res.users'].create(
+            {
+                'partner_id':partner.id,
+                'login':'shell',
+                'password':'shell',
+                'groups_id':[
+                    self.env.ref(group_name).id for group_name in admin_groups
+                ]
+            }
+        )
+        print("Created new user with id: %d, login: 'shell' password: 'shell'" % user.id)
+
     def is_valid_modelname(self, string):
         if string in self.model_names:
             return True
