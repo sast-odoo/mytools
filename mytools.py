@@ -20,6 +20,23 @@ class Tool():
         users.write({"password":"shell"})
         self.env.cr.commit()
         print("Changed all user passwords to 'shell'")
+
+    def referencing(self, record):
+        result = self._comodel_for(record._name)
+        for field_id, model, name, ttype, inverse in result:
+            field = self.env["ir.model.fields"].browse(field_id)
+            #print("Stored:",field.store)
+            if field.store:
+                #if ttype == "many2one":
+                recs = self.env[model].search([(name, '=', record.id)])
+                if recs:
+                    print(f"{model} {name} ({ttype}, {self.inverse_str(None, inverse=inverse)}):", end=" ")
+                    for rec in recs:
+                        print(rec.id, end=", ")
+                    print()
+                #elif ttype = "one2many":
+                #    recs = self.env[model].search([(name, '=',)])
+                    
     
     def new_user(self):
 
@@ -93,15 +110,31 @@ class Tool():
             for view in sorted(view_records,key=lambda v: v['type']):
                 print(f"\t\t{view['type']}:\t{view['xml_id']} (id: {view['id']})")
 
+    def _comodel_for(self, modelname):
+        fields = self.env['ir.model.fields'].search([('relation','=ilike',modelname)])
+        result = []
+
+        for field in sorted(fields, key=lambda f: f.model): #sort by model name
+            result.append((field.id, field.model, field.name, field.ttype, self.get_inverse(field)))
+        return result
+
+
     def comodel_for(self, modelname):
-        ''' find all fields that have this model as its relational comodel '''
+        ''' find all fields that have this model as its relational comodel 
+        (user friendly wrapper for __comodel_for that prints the results) '''
         if not self.is_valid_modelname(modelname):
             return
         
         print(f"Fields that model '{modelname}' is a comodel for:")
-        fields = self.env['ir.model.fields'].search([('relation','=ilike',modelname)])
-        for field in sorted(fields, key=lambda f: f.model): #sort by model name
-            print(f"{field.id}\t{field.model}: {field.name} ({field.ttype}, {self.inverse_str(field)})")
+
+        result = self._comodel_for(modelname)
+        for id, model, name, ttype, inverse in result:
+            print(f"{id}\t{model}: {name} ({ttype}, {self.inverse_str(None, inverse=inverse)})")
+
+
+        #fields = self.env['ir.model.fields'].search([('relation','=ilike',modelname)])
+        #for field in sorted(fields, key=lambda f: f.model): #sort by model name
+        #    print(f"{field.id}\t{field.model}: {field.name} ({field.ttype}, {self.inverse_str(field)})")
 
     def required(self, modelname):
         ''' Print names of required fields on this model '''
@@ -145,15 +178,21 @@ class Tool():
         # if this field doesn't have the inverse set, the inverse field still may have ITS inverse set as this field
         field_result = self.env['ir.model.fields'].search([('relation','=ilike', field['model']), ('relation_field','=ilike',field['name'])])
         if len(field_result)>1:
-            return ", ".join(field_result.mapped("name"))
+            return field_result.mapped("name")
         if len(field_result)==1:
             return field_result.name
         return None
 
-    def inverse_str(self, field):
+    def inverse_str(self, field, inverse=-1):
         ''' return print-ready string result of get_inverse '''
-        inv = self.get_inverse(field)
+        if inverse != -1:
+            inv = inverse
+        else:
+            inv = self.get_inverse(field)
+        
         if inv:
+            if isinstance(inv, list):
+                inv = ", ".join(inv)
             return f"inverse to {inv}"
         return "no inverse"
 
