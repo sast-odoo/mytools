@@ -25,3 +25,7 @@ In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` 
 - make a new user with login 'shell' and password 'shell' with base admin rights (useful for duplicated client databases)
 ### reset_pws()
 - display all user logins, and resets passwords for all of them to 'shell' (useful for duplicated client databases)
+### referencing(record)
+- display all records that point to this record on a relational field
+### get(modelname, id)
+- shortcut for `env[modelname].browse(id)`

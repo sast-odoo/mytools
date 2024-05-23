@@ -12,6 +12,11 @@ class Tool():
 
         self.model_names = env['ir.model'].search([]).mapped('model')
 
+    def get(self, modelname, id):
+        if not self.is_valid_modelname(modelname):
+            return
+        return self.env[modelname].browse(id)
+
     def reset_pws(self):
         users = self.env['res.users'].search([])
         print("Logins:")
@@ -25,18 +30,14 @@ class Tool():
         result = self._comodel_for(record._name)
         for field_id, model, name, ttype, inverse in result:
             field = self.env["ir.model.fields"].browse(field_id)
-            #print("Stored:",field.store)
-            if field.store:
-                #if ttype == "many2one":
+            if field.store: # can't search non stored fields
                 recs = self.env[model].search([(name, '=', record.id)])
                 if recs:
-                    print(f"{model} {name} ({ttype}, {self.inverse_str(None, inverse=inverse)}):", end=" ")
-                    for rec in recs:
-                        print(rec.id, end=", ")
-                    print()
-                #elif ttype = "one2many":
-                #    recs = self.env[model].search([(name, '=',)])
-                    
+                    print(f"{field_id}\t{model} - on {name} ({ttype}, {self.inverse_str(None, inverse=inverse)}):", end=" ")
+                    if len(recs) > 30:
+                        print(f"[{len(recs)} records]")
+                    else:
+                        print(*recs.ids, sep=", ")
     
     def new_user(self):
 
@@ -286,7 +287,11 @@ class Tool():
 
             print_list.append("*** Selection info ***")
 
-            selections = self.env['ir.model.fields.selection'].browse(field['selection_ids'].ids)
+            if isinstance(field['selection_ids'],list):
+                selections = self.env['ir.model.fields.selection'].browse(field['selection_ids'])
+            else:
+                selections = self.env['ir.model.fields.selection'].browse(field['selection_ids'].ids)
+
             #print(selections)
             for selection in selections:
                 print_list.append(f'\t{selection.id}: {selection.value} - "{selection.name}"')
@@ -349,7 +354,10 @@ class Tool():
 
         if len(record)<=1:
             archived_str = ""
-            id_str = ", id: %d " % record.id
+            try:
+                id_str = ", id: %d " % record.id
+            except TypeError:
+                id_str = ", id: " + str(record.id)
             if not print_values:
                 id_str = " [FIELDS ONLY]"
             elif "active" in record and not record.active:
