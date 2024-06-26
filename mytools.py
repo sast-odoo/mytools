@@ -1,4 +1,8 @@
-from thefuzz import fuzz
+try:
+    from thefuzz import fuzz
+    fuzz_imported = True
+except ImportError:
+    fuzz_imported = False
 
 # TODO - ability to display all records of a relationship field
 # like if a record has a field named 'related_ids' with [1,2,3,4,5],
@@ -33,9 +37,12 @@ class Tool():
     def is_valid_modelname(self, string):
         if string in self.model_names:
             return True
-        print(f"No model named '{string}', did you mean:")
-        for match in sorted(self.model_names, key=lambda i: fuzz.ratio(i, string), reverse=True)[:4]:
-            print(f"\t{match}")
+        if fuzz_imported:
+            print(f"No model named '{string}', did you mean:")
+            for match in sorted(self.model_names, key=lambda i: fuzz.ratio(i, string), reverse=True)[:4]:
+                print(f"\t{match}")
+        else:
+            print(f"No model named '{string}' in database.")
         return False
     
     def views(self, modelname):
