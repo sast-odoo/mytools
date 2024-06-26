@@ -254,7 +254,7 @@ class Tool():
         for print_item in print_list:
             print(print_item)
 
-    def display(self, record, id=None, ttype=False, hide_empty=False, archived=False):
+    def display(self, record, id=None, fields=None, ttype=False, hide_empty=False, archived=False):
         if isinstance(record,str):
             if not self.is_valid_modelname(record):
                 return
@@ -263,6 +263,7 @@ class Tool():
             if not id:
                 self.display(
                         self.env[model_name].search([],limit=1),
+                        fields=fields,
                         ttype=ttype,
                         hide_empty=hide_empty,
                         archived=archived)
@@ -283,7 +284,7 @@ class Tool():
                 search_domain.append(("active","in",(True,False)))
 
             result = self.env[model_name].search(search_domain)
-            self.display(result, ttype=ttype, hide_empty=hide_empty)
+            self.display(result, fields=fields, ttype=ttype, hide_empty=hide_empty)
 
             return
 
@@ -294,6 +295,12 @@ class Tool():
                 domain.append(('ttype','=ilike',ttype))
             elif isinstance(ttype,(list,tuple)):
                 domain.append(('ttype','in',ttype))
+
+        if fields:
+            if isinstance(fields,str):
+                domain.append(('name','=ilike',fields))
+            elif isinstance(fields,(list,tuple)):
+                domain.append(('name','in',fields))
 
         read_fields = self.env['ir.model.fields'].search(domain).read()
         
@@ -350,5 +357,5 @@ class Tool():
                 
         else:
             for rec in sorted(record, key=lambda i: i.id):
-                self.display(rec, ttype=ttype, hide_empty=hide_empty, archived=archived)
+                self.display(rec, fields=fields, ttype=ttype, hide_empty=hide_empty, archived=archived)
                 print("\n")
