@@ -261,7 +261,9 @@ class Tool():
         for print_item in print_list:
             print(print_item)
 
-    def display(self, record, id=None, fields=None, ttype=False, hide_empty=False, archived=False):
+    def display(self, record, id=None, fields=None, ttype=False, hide_empty=False, archived=False, toprint=True):
+        print_list = []
+
         if isinstance(record,str):
             if not self.is_valid_modelname(record):
                 return
@@ -273,7 +275,8 @@ class Tool():
                         fields=fields,
                         ttype=ttype,
                         hide_empty=hide_empty,
-                        archived=archived)
+                        archived=archived,
+                        toprint=toprint)
                 return
             
             if isinstance(id,int):
@@ -291,7 +294,7 @@ class Tool():
                 search_domain.append(("active","in",(True,False)))
 
             result = self.env[model_name].search(search_domain)
-            self.display(result, fields=fields, ttype=ttype, hide_empty=hide_empty)
+            self.display(result, fields=fields, ttype=ttype, hide_empty=hide_empty, toprint=toprint)
 
             return
 
@@ -318,7 +321,7 @@ class Tool():
         print_values = True
         
         if len(record)==0:
-            print("No records, printing field data only")
+            print_list.append("No records, printing field data only")
             print_values = False
 
         if len(record)<=1:
@@ -332,21 +335,21 @@ class Tool():
             elif "active" in record and not record.active:
                 archived_str = " [ARCHIVED]"
             
-            print('===== %s%s%s =====' % (record._name, id_str, archived_str))
+            print_list.append('===== %s%s%s =====' % (record._name, id_str, archived_str))
 
             record_name_field = record._rec_name # find what field this model uses as its name
             
             if print_values:
                 if record_name_field:
-                    print(f"* Record name ({record_name_field}): '{record[record_name_field]}'")
+                    print_list.append(f"* Record name ({record_name_field}): '{record[record_name_field]}'")
                 else:
-                    print("* No record name field on model")
+                    print_list.append("* No record name field on model")
                 unref_name = self.unref(record)
                 if unref_name:
-                    print(f"* xml_id: {unref_name}")
-                    print(f"* ir.model.data id: {', '.join(str(i) for i in self.data(record).ids)}")
+                    print_list.append(f"* xml_id: {unref_name}")
+                    print_list.append(f"* ir.model.data id: {', '.join(str(i) for i in self.data(record).ids)}")
             else:
-                print(f"* Record name field: {record_name_field}")
+                print_list.append(f"* Record name field: {record_name_field}")
 
             if print_values:
                 sorted_items = sorted(list(record.read()[0].items()), key=lambda i: i[0])
@@ -360,9 +363,33 @@ class Tool():
                     # fake fields like 'in_group_11' will throw keyerror
                     continue
 
-                print(f"{fields_dict[key]['id']}\t{key} ({self.ttype_str(fields_dict[key])}){self.val_str(fields_dict[key], val, print_values)}")
+                print_list.append(f"{fields_dict[key]['id']}\t{key} ({self.ttype_str(fields_dict[key])}){self.val_str(fields_dict[key], val, print_values)}")
                 
         else:
             for rec in sorted(record, key=lambda i: i.id):
-                self.display(rec, fields=fields, ttype=ttype, hide_empty=hide_empty, archived=archived)
-                print("\n")
+                self.display(rec, fields=fields, ttype=ttype, hide_empty=hide_empty, archived=archived, toprint=toprint)
+                print_list.append("\n")
+
+        if toprint:
+            for line in print_list:
+                print(line)
+        else:
+            return print_list
+
+    def display_proc(self, proc):
+        print(f"""
+~~~~~~ Procurement ~~~~~~
+\tproduct_id: {proc.product_id.id}, "{proc.product_id.name}"
+\tproduct_qty: {proc.product_qty}
+\tproduct_uom: {proc.product_uom.id}, "{proc.product_uom.name}"
+\tlocation_id: {proc.location_id.id}, "{proc.location_id.name}"
+\tname: "{proc.name}"
+\torigin: "{proc.origin}"
+\tcompany_id: {proc.company_id.id}, "{proc.company_id.name}"
+\tvalues:""")
+        for key,value in proc.values.items():
+            print(f"\t\t{key}: ",end="")
+            try:
+                print(f'{value}, "{value.name}"')
+            except AttributeError:
+                print(f"{value}")
