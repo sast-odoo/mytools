@@ -8,7 +8,7 @@ In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` 
 ## Useful methods
 
 ### display(record OR str modelname, int id=None, ttype=False, hide_empty=False, archived=False)
-- display all the fields and their values of the record along with a bunch of useful info about the fields
+- display all the fields and their values of the record along with a bunch of useful info about the record and fields. The number at the left of each field line is the ir.model.fields ID of that field (can be used in fieldinfo)
 ### views(str modelname)
 - display all the views for that model in the database, noting the filepath of each view and whether or not it's inherited
 ### comodel_for(str modelname)
@@ -21,10 +21,6 @@ In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` 
 - print names of all relational (many2one, x2many) fields on the model with useful info
 ### fieldinfo(str modelname OR int fieldId OR tuple (int fieldId))
 - print useful info about a particular field
-### new_user()
-- make a new user with login 'shell' and password 'shell' with base admin rights (useful for duplicated client databases)
-### reset_pws()
-- display all user logins, and resets passwords for all of them to 'shell' (useful for duplicated client databases)
 ### referencing(record)
 - display all records that point to this record on a relational field
 ### get(modelname, id)
