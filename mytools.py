@@ -414,3 +414,18 @@ class Tool():
 
         print(f"Deleting record with id {record.id} from table {record._table}")
         self.env.cr.execute(f"DELETE FROM {record._table} WHERE id={record.id}")
+
+    def hard_copy(self, record, id=None):
+        if isinstance(record,str):
+            if not self.is_valid_modelname(record):
+                return
+            model_name = record
+            return self.hard_copy(self.env[model_name].search([('id','=',id)])) #returns void recordset if no record with this id exists (browse does not)
+
+        if len(record)==0:
+            print("No record given / no record with this id exists")
+            return
+
+        vals = record.read(load=None)[0]
+        vals.pop('id')
+        return self.env[record._name].create(vals)
