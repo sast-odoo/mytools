@@ -3,7 +3,7 @@ You can import and use the tool in the odoo shell or in odoo modules to help deb
 
 To use the methods, you must create a "Tool" object, this object is instantiated with the odoo 'env' object, such as `t = Tool(env)`. All the methods can then be accessed by doing `t.display(...)`
 
-In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` every single time you start the shell, you can modify the odoo/cli/shell.py file: add `from ..mytools import Tool` to the top of the file, then under the line `local_vars['self'] = env.user` in the shell() function, add the line `local_vars['t'] = Tool(env)`, now you can use `t` to access all the methods without having to instantiate it every time.
+In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` every single time you start the shell, you can modify the odoo/cli/shell.py file: add `from odoo.mytools import Tool` to the top of the file, then under the line `local_vars['self'] = env.user` in the shell() function, add the line `local_vars['t'] = Tool(env)`, now you can use `t` to access all the methods without having to instantiate it every time.
 
 ## Useful methods
 

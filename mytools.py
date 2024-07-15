@@ -10,6 +10,13 @@ except ImportError:
 
 # TODO - viewing computed fields in fieldinfo doens't behave as expected
 
+# TODO - make display() show what fields are computed (like how it does for related)
+
+# TODO - referencing() but get it to return recordsets
+# i.e. referencing(record, model='res.partner') returns a recordset of res.partner records that reference this record
+# bonus: referencing(record, model=['res.partner','sale.order']) return a list of [res.partner(...), sale.order(...)] list of recordsets
+# or {'res.partner': res.partner(...), 'sale.order': sale.order(...)}
+
 class Tool():
     def __init__(self, env):
         self.env = env
@@ -393,3 +400,15 @@ class Tool():
                 print(f'{value}, "{value.name}"')
             except AttributeError:
                 print(f"{value}")
+
+    def hard_delete(self, record, id=None):
+        if isinstance(record,str):
+            if not self.is_valid_modelname(record):
+                return
+            model_name = record
+            return self.hard_delete(self.get(model_name, id))
+        if not record:
+            print("No record given / no record with this id exists")
+            return
+        print(f"Deleting record with id {record.id} from table {record._table}")
+        self.env.cr.execute(f"DELETE FROM {record._table} WHERE id={record.id}")
