@@ -406,9 +406,11 @@ class Tool():
             if not self.is_valid_modelname(record):
                 return
             model_name = record
-            return self.hard_delete(self.get(model_name, id))
-        if not record:
+            return self.hard_delete(self.env[model_name].search([('id','=',id)])) #returns void recordset if no record with this id exists (browse does not)
+
+        if len(record)==0:
             print("No record given / no record with this id exists")
             return
+
         print(f"Deleting record with id {record.id} from table {record._table}")
         self.env.cr.execute(f"DELETE FROM {record._table} WHERE id={record.id}")
