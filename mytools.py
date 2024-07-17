@@ -372,8 +372,12 @@ class Tool():
                     # fake fields like 'in_group_11' will throw keyerror
                     continue
 
-                print_list.append(f"{fields_dict[key]['id']}\t{key} ({self.ttype_str(fields_dict[key])}){self.val_str(fields_dict[key], val, print_values)}")
-                
+                stored_str = ""
+                if not fields_dict[key]['store']:
+                    stored_str = ", NOT STORED"
+
+                print_list.append(f"{fields_dict[key]['id']}\t{key} ({self.ttype_str(fields_dict[key])}{stored_str}){self.val_str(fields_dict[key], val, print_values)}")
+
         else:
             for rec in sorted(record, key=lambda i: i.id):
                 self.display(rec, fields=fields, ttype=ttype, hide_empty=hide_empty, archived=archived, toprint=toprint)
