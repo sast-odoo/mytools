@@ -25,3 +25,15 @@ In order to avoid having to type `from odoo.mytools import` and `t = Tool(env)` 
 - display all records that point to this record on a relational field
 ### get(modelname, id)
 - shortcut for `env[modelname].browse(id)`
+### display_proc(Procurement)
+- display a Procurement (named tuple) in a way thats a bit easier to read
+### hard_delete(record OR str modelname OR list/tuple[record], int id=None)
+- execute SQL query to force delete this record from the database (bypassing all ORM restrictions/checks)
+### soft_copy(record OR str modelname, id=None, new_values={})
+- copy a record with all its fields, including ones that have copy=False; pass new_values as a dict of {fieldname: value} to make the new record have those values for those fields instead (useful for fields that must be unique)
+### hard_copy(record OR str modelname, id=None, new_values={})
+- same as soft_copy but do it with SQL instead of the ORM
+### sqlify(value)
+- format value so that it can be used in a SQL update/insert query (i.e. None --> 'null', add single quotes to strings, etc.)
+### all(modelname, archived=False)
+- shortcut for self.env[modelname].search([]) (return recordset of all records); pass archived=True to include records that are archived (by default they are omitted)

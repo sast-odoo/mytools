@@ -4,6 +4,8 @@ try:
 except ImportError:
     fuzz_imported = False
 
+import datetime
+
 # TODO - ability to display all records of a relationship field
 # like if a record has a field named 'related_ids' with [1,2,3,4,5],
 # some way to just type record.related_ids and display all of [1,2,3,4,5]
@@ -407,6 +409,9 @@ class Tool():
                 return
             model_name = record
             return self.hard_delete(self.env[model_name].search([('id','=',id)])) #returns void recordset if no record with this id exists (browse does not)
+        if isinstance(record,(list,tuple)):
+            for rec in record:
+                self.hard_delete(rec)
 
         if len(record)==0:
             print("No record given / no record with this id exists")
@@ -415,12 +420,12 @@ class Tool():
         print(f"Deleting record with id {record.id} from table {record._table}")
         self.env.cr.execute(f"DELETE FROM {record._table} WHERE id={record.id}")
 
-    def hard_copy(self, record, id=None):
+    def soft_copy(self, record, id=None, new_values={}):
         if isinstance(record,str):
             if not self.is_valid_modelname(record):
                 return
             model_name = record
-            return self.hard_copy(self.env[model_name].search([('id','=',id)])) #returns void recordset if no record with this id exists (browse does not)
+            return self.soft_copy(self.env[model_name].search([('id','=',id)]), new_values=new_values) #returns void recordset if no record with this id exists (browse does not)
 
         if len(record)==0:
             print("No record given / no record with this id exists")
@@ -428,4 +433,36 @@ class Tool():
 
         vals = record.read(load=None)[0]
         vals.pop('id')
+        vals.update(new_values)
         return self.env[record._name].create(vals)
+
+    def sqlify(self, value):
+        if isinstance(value, (int, float)):
+            return str(value)
+        if value is None:
+            return "null"
+        if isinstance(value, str):
+            return "'" + value + "'"
+        if isinstance(value, datetime.datetime):
+            return "'" + str(value) + "'"
+        return value
+
+    def hard_copy(self, record, id=None, new_values={}):
+
+        self.env.cr.execute(f"SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = N'{record._table}'")
+        fieldnames = [res[3] for res in self.env.cr.fetchall()]
+        fieldnames.remove("id")
+        self.env.cr.execute(f"SELECT {', '.join(fieldnames)} FROM {record._table} WHERE id={record.id}")
+        values = list(self.env.cr.fetchall()[0])
+
+        for key in new_values:
+            field_index = fieldnames.index(key)
+            values[field_index] = new_values[key]
+
+        sql_values = [self.sqlify(value) for value in values]
+        self.env.cr.execute(f"INSERT INTO {record._table} ({', '.join(fieldnames)}) VALUES ({', '.join(sql_values)})")
+
+    def all(self, modelname, archived=False):
+        if archived:
+            return self.env[modelname].search([('active','in',(True,False))])
+        return self.env[modelname].search([])
