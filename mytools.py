@@ -30,18 +30,21 @@ class Tool():
             return
         return self.env[modelname].browse(id)
 
-    def referencing(self, record):
+    def referencing(self, record, all=False):
         result = self._comodel_for(record._name)
         for field_id, model, name, ttype, inverse in result:
             field = self.env["ir.model.fields"].browse(field_id)
             if field.store: # can't search non stored fields
-                recs = self.env[model].search([(name, '=', record.id)])
-                if recs:
-                    print(f"{field_id}\t{model} - on {name} ({ttype}, {self.inverse_str(None, inverse=inverse)}):", end=" ")
-                    if len(recs) > 30:
-                        print(f"[{len(recs)} records]")
-                    else:
-                        print(*recs.ids, sep=", ")
+                try:
+                    recs = self.env[model].search([(name, '=', record.id)])
+                    if recs:
+                        print(f"{field_id}\t{model} - on {name} ({ttype}, {self.inverse_str(None, inverse=inverse)}):", end=" ")
+                        if len(recs) > 30 and not all:
+                            print(f"[{len(recs)} records]")
+                        else:
+                            print(*recs.ids, sep=", ")
+                except ValueError:
+                    pass
 
     def is_valid_modelname(self, string):
         if string in self.model_names:
